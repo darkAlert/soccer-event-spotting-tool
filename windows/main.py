@@ -55,11 +55,11 @@ class WindowMain:
                       element_justification='center', vertical_alignment='top', expand_x=True)],
             [],
             [sg.Frame('Редактирование ивента', self.create_layout_edit_event(), key='-EDIT_EVENT_LAYOUT-',
-                      element_justification='center', vertical_alignment='bottom', visible=False)]
+                      element_justification='center', vertical_alignment='bottom', visible=False, expand_x=True)]
         ]
         sg_column_top = sg.Column([[
             sg.Column([[sg.Image(key='image_canvas')]]),
-            sg.Column(event_panel, vertical_alignment='top')
+            sg.Column(event_panel, vertical_alignment='top', expand_x=True)
         ]])
 
         # Bottom column (slider + navigation + event table):
@@ -112,7 +112,7 @@ class WindowMain:
                 expand_y=True
             )
         ]
-        sg_column_bottom = sg.Column([slider, navigation_panel, event_table], vertical_alignment='top', expand_x=True)
+        sg_column_bottom = sg.Column([slider, navigation_panel, event_table], vertical_alignment='top', expand_x=True, expand_y=True)
 
         # All the stuff inside the window:
         layout = [
@@ -128,10 +128,11 @@ class WindowMain:
             layout,
             return_keyboard_events=True,
             location=(0, 0),
-            resizable=False,
+            resizable=True,
             use_default_focus=False,
             enable_close_attempted_event=True
         ).Finalize()
+        window.Maximize()
 
         return window
 
