@@ -2,7 +2,9 @@ import json
 
 class EventTypes:
     _types = [
-        {'type': 'ATTACK', 'alias': 'Атака'},
+        {'type': 'ATTACK_START', 'alias': 'Атака - начало'},
+        {'type': 'ATTACK_DEVELOPMENT', 'alias': 'Атака - развитие'},
+        {'type': 'ATTACK_END', 'alias': 'Атака - завершение'},
         {'type': 'DEFENSE_HIGH', 'alias': 'Оборона - высокая'},
         {'type': 'DEFENSE_MEDIUM', 'alias': 'Оборона - в средней зоне'},
         {'type': 'DEFENSE_LOW', 'alias': 'Оборона - низкая'},
@@ -35,8 +37,8 @@ class EventTypes:
 
 
 class Event:
-    def __init__(self, type, name, team_key, start_idx, end_idx=None, players=None, enemy_players=None):
-        assert type is not None and name is not None and team_key is not None and start_idx is not None
+    def __init__(self, type, name, start_idx, team_key='none', end_idx=None, players=None, enemy_players=None):
+        assert type is not None and name is not None and start_idx is not None
         self.type = type
         self.name = name
         self.team_key = team_key
@@ -58,18 +60,18 @@ class EventManager:
 
 
     def set_teams(self, home_team, away_team):
-        self.teams = {'home_team': home_team, 'away_team': away_team}
-        self.team_name_to_key = {home_team: 'home_team', away_team: 'away_team'}
+        self.teams = {'home_team': home_team, 'away_team': away_team, 'none': 'none'}
+        self.team_name_to_key = {home_team: 'home_team', away_team: 'away_team', 'none': 'none'}
 
 
-    def create_event(self, event_type, event_name, team_key, start_idx,
-                     end_idx=None, players=None, enemy_players=None):
+    def create_event(self, event_type, event_name, start_idx,
+                     team_key='none', end_idx=None, players=None, enemy_players=None):
         if event_name in self.events[event_type]:
-            return False
+            return None
         else:
-            event = Event(event_type, event_name, team_key, start_idx, end_idx, players, enemy_players)
+            event = Event(event_type, event_name, start_idx, team_key, end_idx, players, enemy_players)
             self.events[event_type][event_name] = event
-            return True
+            return event
 
     def get_event(self, event_type, event_name):
         return self.events[event_type].get(event_name, None)
@@ -92,8 +94,8 @@ class EventManager:
             self.create_event(
                 event['type'],
                 event['name'],
-                event['team_key'],
                 event['start_frame'],
+                event['team_key'],
                 event['end_frame'],
                 event['players'],
                 event['enemy_players']

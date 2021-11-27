@@ -10,7 +10,6 @@ from video_player import VideoPlayer
 from fps_manager import FPSManager
 from event_manager import EventManager
 from windows.main import WindowMain, show_team_setting_window, SPEED_VALUES
-from windows.event_panel import WindowEventPanel
 from windows.utils import image_np_to_pil, show_conformation_window
 
 
@@ -45,7 +44,6 @@ def get_events_path(video_path):
 def run_player(video_dir):
     # Create GUI windows:
     window_main = WindowMain(video_dir)
-    window_event_panel = None
 
     # Instantiate:
     player = VideoPlayer()
@@ -90,15 +88,23 @@ def run_player(video_dir):
         # Open video file:
         elif event == 'file_browse':
             video_path = values['file_browse']
-            if len(video_path) > 0:
+            if len(video_path) > 0 and video_path != player.path:
                 # Check if need to save event file of the current video:
                 if player.is_open():
                     header = 'Подтверждение сохранения в файл'
                     message = 'Сохранить ивенты в файл\n{}?'.format(get_events_path(player.path))
                     if show_conformation_window(header, message):
                         event_manager.save(get_events_path(player.path))
-                    if window_event_panel is not None:
-                        window_event_panel = window_event_panel.close()
+                    # Close current video:
+                    player.release()
+                    event_manager = None
+                    window_main.clean_evant_table()
+                    window_main.set_event_layout_visibility(False)
+                    fps_manager = FPSManager()
+                    pil_img = image_np_to_pil(np.zeros((720, 1280, 3), dtype=np.uint8))
+                    window_main.window['image_canvas'].update(data=pil_img)
+                    state = State.NOT_OPEN
+
                 # Open new video:
                 player.open(video_path)
                 if player.is_open():
@@ -124,8 +130,9 @@ def run_player(video_dir):
                     fps_manager.reset()
                     fps_manager.set_target_fps(player.video_fps)
                     window_main.window['button_play'].update('⏸')
+                    window_main.refresh_event_table(event_manager, player.video_fps)
                     state = State.PLAY_ONCE
-                    # create_dummy_events(event_manager)       # Create fake events FOR DEBUG!!!!!!!!!!!!!
+
 
         # Change playing speed:
         elif event == 'combo_speed':
@@ -149,21 +156,51 @@ def run_player(video_dir):
             if state == State.PAUSE:
                 state = State.PLAY_ONCE
 
-        # Show Event Panel:
-        elif event == 'Панель ивентов':
-            if window_event_panel is None:
-                if player.is_open():
-                    window_event_panel = WindowEventPanel(event_manager, player.video_fps)
-            else:
-                window_event_panel = window_event_panel.close()
 
         # Save events:
         elif event == 'Сохранить':
             if player.is_open():
                 event_manager.save(get_events_path(player.path))
 
-        # elif event == 'Configure':
-            # print(player.frame_id, window.size)
+        # EVENT TABLE:
+        elif event == '-EVENT_TABLE-' and player.is_open():
+            window_main.set_event_layout_visibility(True)
+            window_main.refresh_edit_event_layout(event_manager, player.video_fps, values['-EVENT_TABLE-'])
+
+        # EVENT PANEL:
+        elif event == '-EDIT_EVENT_SET_START_TIME-' and player.is_open():
+            window_main.set_event_time(player.video_fps, start_frame=player.frame_id)
+        elif event == '-EDIT_EVENT_SET_END_TIME-' and player.is_open():
+            window_main.set_event_time(player.video_fps, end_frame=player.frame_id)
+        elif event == '-EDIT_EVENT_MOVE_TO_START-' and player.is_open():
+            start_frame, _ = window_main.get_event_start_and_end()
+            if start_frame is not None:
+                player.rewind(start_frame)
+                if state == State.PAUSE:
+                    state = State.PLAY_ONCE
+        elif event == '-EDIT_EVENT_MOVE_TO_END-' and player.is_open():
+            _, end_frame = window_main.get_event_start_and_end()
+            if end_frame is not None:
+                player.rewind(end_frame)
+                if state == State.PAUSE:
+                    state = State.PLAY_ONCE
+        elif event == '-EDIT_EVENT_SAVE-' and player.is_open():
+            window_main.save_edited_event(event_manager)
+            selected_event = window_main.get_selected_event()
+            window_main.refresh_event_table(event_manager, player.video_fps, select_event=selected_event)
+        elif event == '-EDIT_EVENT_RESET-' and player.is_open():
+            selected_event = window_main.get_selected_event()
+            window_main.refresh_event_table(event_manager, player.video_fps, select_event=selected_event)
+        elif event == '-EDIT_EVENT_DELETE-' and player.is_open():
+            deleted_rows = window_main.delete_edited_event(event_manager)
+            if deleted_rows is not None:
+                window_main.refresh_event_table(event_manager, player.video_fps, deleted_rows)
+                window_main.set_event_layout_visibility(False)
+        elif event == '-CREATE_EVENT-' and player.is_open():
+            window_main.create_new_event(event_manager, player.frame_id)
+            selected_event = window_main.get_selected_event()
+            window_main.refresh_event_table(event_manager, player.video_fps, select_event=selected_event)
+
 
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
@@ -183,16 +220,6 @@ def run_player(video_dir):
         # Update image on the screen:
         if pil_img is not None:
             window_main.window['image_canvas'].update(data=pil_img)
-
-        # Event Panel events:
-        if window_event_panel is not None:
-            ret_state, ret_value = window_event_panel.read(player.frame_id)
-            if ret_state == 'close':
-                window_event_panel = None
-            elif ret_state == 'move_to':
-                player.rewind(ret_value)
-                if state == State.PAUSE:
-                    state = State.PLAY_ONCE
 
     window_main.window.close()
 
