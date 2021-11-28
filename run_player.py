@@ -222,8 +222,9 @@ def run_player(video_dir):
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
             frame_size = calculate_frame_size(window_main.window.size)
-            print(window_main.window.size, frame_size)
-            playing, img = player.capture(frame_size)
+            # playing, img = player.capture(frame_size)
+            playing = True
+            img = np.zeros((frame_size[1], frame_size[0], 3), dtype=np.uint8)
             if img is not None:
                 pil_img = image_np_to_pil(img)
             window_main.window['slider_frame_id'].update(value=player.frame_id)
