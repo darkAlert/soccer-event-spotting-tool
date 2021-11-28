@@ -6,7 +6,7 @@ from enum import Enum
 import numpy as np
 import PySimpleGUI as sg
 
-from video_player import VideoPlayer, VideoPlayerMP
+from video_player import VideoPlayer
 from fps_manager import FPSManager
 from event_manager import EventManager
 from windows.main import WindowMain, show_team_setting_window, SPEED_VALUES
@@ -62,8 +62,7 @@ def run_player(video_dir):
     window_main = WindowMain(video_dir)
 
     # Instantiate:
-    # player = VideoPlayer()
-    player = VideoPlayerMP()
+    player = VideoPlayer()
     fps_manager = FPSManager()
     event_manager = None
     state = State.NOT_OPEN
@@ -223,10 +222,8 @@ def run_player(video_dir):
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
             frame_size = calculate_frame_size(window_main.window.size)
-            # playing, img = player.capture(frame_size)
-            playing, img = player.get_frame(frame_size)
-            print (playing, img is not None)
-
+            playing, img = player.capture(frame_size)
+            # playing, img = player.get_frame(frame_size)
 
             if img is not None:
                 pil_img = image_np_to_pil(img)

@@ -154,22 +154,16 @@ class VideoPlayerMP:
     def capture(path, cap, frames, terminate, terminated):
         cap = cv2.VideoCapture(path)
         assert cap is not None and cap.isOpened()
-        print('Worker started!')
 
         while not terminate.is_set():
-            print ('read')
             _, img = cap.read()
-            print ('read done!')
 
             if img is None:
                 break
 
-            print ('frames',frames.qsize())
             frames.put(img)
-            print ('capture', img is not None)
 
         terminated.set()
-        print ('Worker terminated!')
 
 
     def get_frame(self, frame_size=(1280,720)):
