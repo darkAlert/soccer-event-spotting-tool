@@ -223,6 +223,7 @@ def run_player(video_dir):
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
             frame_size = calculate_frame_size(window_main.window.size)
+            print(window_main.window.size, frame_size)
             playing, img = player.capture(frame_size)
             if img is not None:
                 pil_img = image_np_to_pil(img)
