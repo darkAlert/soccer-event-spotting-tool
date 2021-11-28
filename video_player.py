@@ -53,7 +53,7 @@ class VideoPlayer:
             self._cap.set(cv2.CAP_PROP_POS_FRAMES, next_frame_id)  # rewind
         self._frame_id = next_frame_id-1
 
-    def capture(self):
+    def capture(self, frame_size=(1280,720)):
         assert self._cap is not None and self._cap.isOpened()
 
         self._frame_id += 1
@@ -63,6 +63,9 @@ class VideoPlayer:
             return False, None
 
         _, img = self._cap.read()
+
+        if img is not None and frame_size[0] != img.shape[1]:
+            img = cv2.resize(img, frame_size, interpolation=cv2.INTER_AREA)
 
         return True, img
 

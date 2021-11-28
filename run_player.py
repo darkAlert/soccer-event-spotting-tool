@@ -21,6 +21,23 @@ class State(Enum):
     EXIT = 5
 
 
+def calculate_frame_size(window_size, max_frame_size=(1280,720), max_ratio=0.7):
+    '''
+    :param window_size:
+    :param max_video_size:
+    :param max_ratio:       max ratio of video to window
+    :return:
+    '''
+    target_frame_size = max_frame_size
+
+    r = max_frame_size[0] / window_size[0]
+    if r > max_ratio:
+        target_r = window_size[0] * max_ratio
+        target_frame_size = (int(round(window_size[0]*target_r)), int(round(window_size[1]*target_r)))
+
+    return target_frame_size
+
+
 def create_dummy_events(event_manager):
     # Create fake events FOR DEBUG:
     event_manager.create_event('ATTACK', 'Атака_1', 'Спартак', 1000)
@@ -51,6 +68,7 @@ def run_player(video_dir):
     event_manager = None
     state = State.NOT_OPEN
     pil_img = image_np_to_pil(np.zeros((720,1280,3), dtype=np.uint8))
+
 
     # Playing loop:
     while state != State.EXIT:
@@ -204,7 +222,8 @@ def run_player(video_dir):
 
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
-            playing, img = player.capture()
+            frame_size = calculate_frame_size(window_main.window.size)
+            playing, img = player.capture(frame_size)
             if img is not None:
                 pil_img = image_np_to_pil(img)
             window_main.window['slider_frame_id'].update(value=player.frame_id)
