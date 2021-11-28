@@ -32,8 +32,7 @@ def calculate_frame_size(window_size, max_frame_size=(1280,720), max_ratio=0.7):
 
     r = max_frame_size[0] / window_size[0]
     if r > max_ratio:
-        target_r = window_size[0] * max_ratio
-        target_frame_size = (int(round(window_size[0]*target_r)), int(round(window_size[1]*target_r)))
+        target_frame_size = (int(round(window_size[0]*max_ratio)), int(round(window_size[1]*max_ratio)))
 
     return target_frame_size
 
