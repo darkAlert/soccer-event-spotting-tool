@@ -1,5 +1,5 @@
 import cv2
-from torch.multiprocessing import Process, Queue, Event, set_start_method
+from multiprocessing import Process, Queue, Event
 from queue import Empty
 
 
