@@ -1,7 +1,8 @@
 import cv2
-from multiprocessing import Process, Queue, Event, Manager, shared_memory, Lock
+from multiprocessing import Process, Queue, Event, Manager, shared_memory, Lock, Value
 from queue import Empty
 import numpy as np
+import time
 
 
 
@@ -91,6 +92,13 @@ class SharedFrameBuffer:
         self._buffer = np.ndarray(data.shape, dtype=np.uint8, buffer=self._shm.buf)
         self._lock = Lock()
 
+        self._writing_idx = 0
+        self._reading_idx = 0
+        self._max_size = 300
+        self._num_frames =  Value('i', 0)
+        self._n = self._shape[0]
+
+
     def __del__(self):
         self._shm.close()
 
@@ -101,16 +109,39 @@ class SharedFrameBuffer:
         existing_shm = shared_memory.SharedMemory(name=self._shm.name)
         buffer = np.ndarray(self._shape, dtype=np.uint8, buffer=existing_shm.buf)
 
+        while True:
+            self._lock.acquire()
+            if self._num_frames.value < self._max_size:
+                self._lock.release()
+                break
+            self._lock.release()
+            time.sleep(0.01)
+
         self._lock.acquire()
-        buffer[0, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
+        buffer[self._writing_idx, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
+        self._num_frames.value += 1
+        # print ('write', self._num_frames.value, self._writing_idx)
         self._lock.release()
 
+        self._writing_idx += 1
+        if self._writing_idx >= self._n:
+            self._writing_idx = 0
         existing_shm.close()
 
     def get(self):
         self._lock.acquire()
-        frame = self._buffer[0, :, :, :]
+
+        # print('read', self._num_frames.value, self._reading_idx)
+        if self._num_frames.value <= 0:
+            self._lock.release()
+            return None
+        frame = self._buffer[self._reading_idx, :, :, :]
+        self._num_frames.value -= 1
         self._lock.release()
+
+        self._reading_idx += 1
+        if self._reading_idx >= self._n:
+            self._reading_idx = 0
 
         return frame
 
