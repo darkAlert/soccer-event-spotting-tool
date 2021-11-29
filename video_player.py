@@ -105,7 +105,7 @@ class VideoPlayerMP:
             self._num_frames = int(self._cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         # Multi-threading:
-        self._run_worker(self.path)
+        self._run_worker(video_path)
 
     def is_open(self):
         return self._cap is not None and self._cap.isOpened()
@@ -151,7 +151,7 @@ class VideoPlayerMP:
 
 
     @staticmethod
-    def capture(path, cap, frames, terminate, terminated):
+    def capture(path,cap, frames, terminate, terminated):
         cap = cv2.VideoCapture(path)
         assert cap is not None and cap.isOpened()
 
