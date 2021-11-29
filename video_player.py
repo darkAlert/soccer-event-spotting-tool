@@ -168,7 +168,7 @@ class VideoPlayerMP:
         # Shared memory:
         self._buffer = SharedFrameBuffer(buffer_shape)
 
-        args = (self.path, self._buffer, self._terminate, self._terminated)
+        args = (self.path, self._buffer._shm.name, self._buffer._lock, buffer_shape, self._terminate, self._terminated)
         self._worker = Process(target=VideoPlayerMP.capture, args=args)
         self._worker.start()
 
@@ -186,14 +186,21 @@ class VideoPlayerMP:
 
 
     @staticmethod
-    def capture(path, buffer, terminate, terminated):
+    def capture(path, buffer_name, lock, buffer_shape, terminate, terminated):
         cap = cv2.VideoCapture(path)
         assert cap is not None and cap.isOpened()
+
+        existing_shm = shared_memory.SharedMemory(name=buffer_name)
+        np_array = np.ndarray(buffer_shape, dtype=np.uint8, buffer=existing_shm.buf)
+
 
         while not terminate.is_set():
             _, img = cap.read()
 
-            buffer.put(img)
+            lock.acquire()
+            np_array[0, :, :, :] = img
+            lock.release()
+            # buffer.put(img)
 
             if img is None:
                 break
@@ -202,7 +209,10 @@ class VideoPlayerMP:
 
             # frames.put(img)
 
+        existing_shm.close()
+
         terminated.set()
+
 
 
     def get_frame(self, frame_size=(1280,720)):
