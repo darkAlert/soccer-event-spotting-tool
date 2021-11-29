@@ -98,9 +98,14 @@ class SharedFrameBuffer:
         if frame is None:
             pass
 
+        existing_shm = shared_memory.SharedMemory(name=self._shm.name)
+        buffer = np.ndarray(self._shape, dtype=np.uint8, buffer=existing_shm.buf)
+
         self._lock.acquire()
-        self._buffer[0, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
+        buffer[0, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
         self._lock.release()
+
+        existing_shm.close()
 
     def get(self):
         self._lock.acquire()
@@ -168,7 +173,7 @@ class VideoPlayerMP:
         # Shared memory:
         self._buffer = SharedFrameBuffer(buffer_shape)
 
-        args = (self.path, self._buffer._shm.name, self._buffer._lock, buffer_shape, self._terminate, self._terminated)
+        args = (self.path, self._buffer, self._buffer._shm.name, self._buffer._lock, buffer_shape, self._terminate, self._terminated)
         self._worker = Process(target=VideoPlayerMP.capture, args=args)
         self._worker.start()
 
@@ -186,21 +191,21 @@ class VideoPlayerMP:
 
 
     @staticmethod
-    def capture(path, buffer_name, lock, buffer_shape, terminate, terminated):
+    def capture(path, buffer, buffer_name, lock, buffer_shape, terminate, terminated):
         cap = cv2.VideoCapture(path)
         assert cap is not None and cap.isOpened()
 
-        existing_shm = shared_memory.SharedMemory(name=buffer_name)
-        np_array = np.ndarray(buffer_shape, dtype=np.uint8, buffer=existing_shm.buf)
+        # existing_shm = shared_memory.SharedMemory(name=buffer_name)
+        # np_array = np.ndarray(buffer_shape, dtype=np.uint8, buffer=existing_shm.buf)
 
 
         while not terminate.is_set():
             _, img = cap.read()
 
-            lock.acquire()
-            np_array[0, :, :, :] = img
-            lock.release()
-            # buffer.put(img)
+            # lock.acquire()
+            # np_array[0, :, :, :] = img
+            # lock.release()
+            buffer.put(img)
 
             if img is None:
                 break
@@ -209,7 +214,7 @@ class VideoPlayerMP:
 
             # frames.put(img)
 
-        existing_shm.close()
+        # existing_shm.close()
 
         terminated.set()
 
