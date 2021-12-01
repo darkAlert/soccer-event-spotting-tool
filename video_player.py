@@ -411,11 +411,11 @@ class SharedFrameBuffer_v2:
     def clear(self):
         raise NotImplementedError
 
-    def put(self, frame, frame_id, timeout=0.01):
+    def put(self, frame_id, frame, timeout=0.01):
         # Wait for the buffer to free up space:
         while True:
             self._lock.acquire()
-            if self._num_frames.value < self._batch_size:
+            if self._num_frames.value < self._batch_size-1:
                 self._lock.release()
                 break
             self._lock.release()
@@ -608,7 +608,7 @@ class VideoPlayerMP_v2:
                 frame = cv2.resize(frame, res, interpolation=cv2.INTER_AREA)
 
             # Put frame in the buffer:
-            buffer.put(frame, frame_id)
+            buffer.put(frame_id, frame)
 
             if frame is None:
                 time.sleep(0.01)
