@@ -123,10 +123,12 @@ def run_player(video_dir):
                     state = State.NOT_OPEN
 
                 # Open new video:
-                frame_size = calculate_frame_size(window_main.window.size)
+
                 player.open(video_path)
                 if player.is_open():
-                    # player.set_resolution(frame_size[0], frame_size[1])
+                    # Set resolution:
+                    frame_size = calculate_frame_size(window_main.window.size)
+                    player.set_resolution(frame_size[0], frame_size[1])
                     # Load events from file:
                     events_path = None
                     path = get_events_path(player.path)
