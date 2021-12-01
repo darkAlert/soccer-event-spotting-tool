@@ -4,6 +4,7 @@ from queue import Empty
 import numpy as np
 import time
 
+cv2.setNumThreads(0)      # disable multithreading
 
 
 class VideoPlayer:
@@ -95,9 +96,8 @@ class SharedFrameBuffer:
         self._writing_idx = 0
         self._reading_idx = 0
         self._max_size = 300
-        self._num_frames =  Value('i', 0)
+        self._num_frames = Value('i', 0)
         self._n = self._shape[0]
-
 
     def __del__(self):
         self._shm.close()
@@ -118,7 +118,8 @@ class SharedFrameBuffer:
             time.sleep(0.01)
 
         self._lock.acquire()
-        buffer[self._writing_idx, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
+        # buffer[self._writing_idx, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
+        buffer[self._writing_idx, :, :, :] = frame
         self._num_frames.value += 1
         # print ('write', self._num_frames.value, self._writing_idx)
         self._lock.release()
@@ -128,7 +129,7 @@ class SharedFrameBuffer:
             self._writing_idx = 0
         existing_shm.close()
 
-    def get(self):
+    def get(self, size):
         self._lock.acquire()
 
         # print('read', self._num_frames.value, self._reading_idx)
@@ -143,7 +144,8 @@ class SharedFrameBuffer:
         if self._reading_idx >= self._n:
             self._reading_idx = 0
 
-        return frame
+        return cv2.resize(frame, (size[0], size[1]), interpolation=cv2.INTER_AREA)
+        # return frame
 
 
 
@@ -251,12 +253,12 @@ class VideoPlayerMP:
 
 
 
-    def get_frame(self, frame_size=(1280,720)):
+    def get_frame(self, size):
         if self._buffer is None:
             return False, None
 
         try:
-            img = self._buffer.get()
+            img = self._buffer.get(size)
 
 
             # img = self._frames.get()
