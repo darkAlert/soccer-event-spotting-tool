@@ -118,8 +118,8 @@ class SharedFrameBuffer:
             time.sleep(0.01)
 
         self._lock.acquire()
-        # buffer[self._writing_idx, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
-        buffer[self._writing_idx, :, :, :] = frame
+        # buffer[self._writing_idx, :, :, :] = frame
+        buffer[self._writing_idx, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
         self._num_frames.value += 1
         # print ('write', self._num_frames.value, self._writing_idx)
         self._lock.release()
@@ -137,6 +137,8 @@ class SharedFrameBuffer:
             self._lock.release()
             return None
         frame = self._buffer[self._reading_idx, :, :, :]
+        # frame = cv2.resize(self._buffer[self._reading_idx, :, :, :], (size[0], size[1]), interpolation=cv2.INTER_AREA)
+
         self._num_frames.value -= 1
         self._lock.release()
 
@@ -144,8 +146,7 @@ class SharedFrameBuffer:
         if self._reading_idx >= self._n:
             self._reading_idx = 0
 
-        return cv2.resize(frame, (size[0], size[1]), interpolation=cv2.INTER_AREA)
-        # return frame
+        return frame
 
 
 
@@ -161,7 +162,7 @@ class VideoPlayerMP:
         self._buffer = None
 
 
-    def open(self, video_path, buffer_shape=(100, 720, 1280, 3)):
+    def open(self, video_path, buffer_shape=(300, 720, 1280, 3)):
         assert video_path is not None and len(video_path)
 
         self._path = video_path

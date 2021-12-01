@@ -123,7 +123,8 @@ def run_player(video_dir):
                     state = State.NOT_OPEN
 
                 # Open new video:
-                player.open(video_path, (300, 720, 1280, 3))
+                frame_size = calculate_frame_size(window_main.window.size)
+                player.open(video_path, (300, frame_size[1], frame_size[0], 3))
                 if player.is_open():
                     # Load events from file:
                     events_path = None
