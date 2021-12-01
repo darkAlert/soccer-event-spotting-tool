@@ -1,5 +1,5 @@
 import cv2
-from multiprocessing import Process, Queue, Event, Manager, shared_memory, Lock, Value
+from multiprocessing import Process, Queue, Event, Manager, shared_memory, Lock, Value, managers
 from queue import Empty
 import numpy as np
 import time
@@ -85,11 +85,12 @@ class VideoPlayer:
 
 
 
-class SharedFrameBuffer:
+class SharedFrameBuffer_old:
     def __init__(self, shape):
         self._shape = shape       # batch, height, width, channels
         data = np.empty(shape=self._shape, dtype=np.uint8)
         self._shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
+        print ('self._shm.buf', type(self._shm.buf), len(self._shm.buf), self._shm.buf)
         self._buffer = np.ndarray(data.shape, dtype=np.uint8, buffer=self._shm.buf)
         self._lock = Lock()
 
@@ -152,6 +153,79 @@ class SharedFrameBuffer:
 
 
 
+
+class SharedFrameBuffer:
+    def __init__(self, shape):
+        self._shape = shape       # batch, height, width, channels
+        data = np.empty(shape=self._shape, dtype=np.uint8)
+        self._shm = shared_memory.SharedMemory(create=True, size=data.nbytes)
+        print ('self._shm.buf', type(self._shm.buf), len(self._shm.buf), self._shm.buf)
+        self._buffer = np.ndarray(data.shape, dtype=np.uint8, buffer=self._shm.buf)
+        self._lock = Lock()
+
+        self._writing_idx = 0
+        self._reading_idx = 0
+        self._max_size = 300
+        self._num_frames = Value('i', 0)
+        self._n = self._shape[0]
+
+    def __del__(self):
+        self._shm.close()
+
+    def put(self, frame):
+        if frame is None:
+            pass
+
+        existing_shm = shared_memory.SharedMemory(name=self._shm.name)
+        buffer = np.ndarray(self._shape, dtype=np.uint8, buffer=existing_shm.buf)
+
+        while True:
+            self._lock.acquire()
+            if self._num_frames.value < self._max_size:
+                self._lock.release()
+                break
+            self._lock.release()
+            time.sleep(0.01)
+
+        self._lock.acquire()
+        # buffer[self._writing_idx, :, :, :] = frame
+        buffer[self._writing_idx, :, :, :] = cv2.resize(frame, (self._shape[2], self._shape[1]), interpolation=cv2.INTER_AREA)
+        self._num_frames.value += 1
+        # print ('write', self._num_frames.value, self._writing_idx)
+        self._lock.release()
+
+        self._writing_idx += 1
+        if self._writing_idx >= self._n:
+            self._writing_idx = 0
+        existing_shm.close()
+
+    def get(self, size):
+        self._lock.acquire()
+
+        # print('read', self._num_frames.value, self._reading_idx)
+        if self._num_frames.value <= 0:
+            self._lock.release()
+            return None
+        frame = self._buffer[self._reading_idx, :, :, :]
+        # frame = cv2.resize(self._buffer[self._reading_idx, :, :, :], (size[0], size[1]), interpolation=cv2.INTER_AREA)
+
+        self._num_frames.value -= 1
+        self._lock.release()
+
+        self._reading_idx += 1
+        if self._reading_idx >= self._n:
+            self._reading_idx = 0
+
+        return frame
+
+
+
+class ShareMemoryManager(managers.BaseManager):
+    pass
+ShareMemoryManager.register('VideoCapture', cv2.VideoCapture)
+
+
+
 class VideoPlayerMP:
     def __init__(self):
         self._cap = None
@@ -169,7 +243,13 @@ class VideoPlayerMP:
         if self._cap is not None:
             self.release()
 
-        self._cap = cv2.VideoCapture(self.path)
+        # self._cap = cv2.VideoCapture(self.path)
+        shared_mem_manager = ShareMemoryManager()
+        shared_mem_manager.start()
+        self._cap = shared_mem_manager.VideoCapture()
+        self._cap.open(self.path)
+
+
         self._video_fps = 0
         self._num_frames = 0
         self._frame_id = -1
@@ -207,7 +287,7 @@ class VideoPlayerMP:
         # Shared memory:
         self._buffer = SharedFrameBuffer(buffer_shape)
 
-        args = (self.path, self._buffer, self._buffer._shm.name, self._buffer._lock, buffer_shape, self._terminate, self._terminated)
+        args = (self._cap, self._buffer, self._buffer._shm.name, self._buffer._lock, buffer_shape, self._terminate, self._terminated)
         self._worker = Process(target=VideoPlayerMP.capture, args=args)
         self._worker.start()
 
@@ -225,8 +305,8 @@ class VideoPlayerMP:
 
 
     @staticmethod
-    def capture(path, buffer, buffer_name, lock, buffer_shape, terminate, terminated):
-        cap = cv2.VideoCapture(path)
+    def capture(cap, buffer, buffer_name, lock, buffer_shape, terminate, terminated):
+        # cap = cv2.VideoCapture(path)
         assert cap is not None and cap.isOpened()
 
         # existing_shm = shared_memory.SharedMemory(name=buffer_name)
