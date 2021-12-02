@@ -79,7 +79,7 @@ class WindowMain:
         ]
         navigation_panel = [
             sg.Column([[
-                sg.Button('◼️', key='button_play', size=(1, 1)),
+                sg.Button('◼️', key='button_play', size=(2, 1)),
                 sg.Combo(
                     [str(speed) for speed in SPEED_VALUES.keys()],
                     key='combo_speed',

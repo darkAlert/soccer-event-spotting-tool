@@ -33,8 +33,8 @@ class SharedFrameBuffer:
         # Wait for the buffer to free up space:
         while True:
             self._lock.acquire()
-            if self._num_frames.value < self._batch_size:
-                self._lock.release()
+            if self._num_frames.value < self._batch_size - 1: # subtract '1' because we don't copy the memory
+                self._lock.release()                          # of the current frame in get() below
                 break
             self._lock.release()
             time.sleep(timeout)
@@ -73,7 +73,7 @@ class SharedFrameBuffer:
         frame_bytes = np.ndarray(shape, dtype=self._bytes.dtype, buffer=self._shm.buf[offset:])
 
         # Read frame from buffer:
-        frame = frame_bytes[:]
+        frame = frame_bytes           # copy() will be needed here if we don't subtract '1' in put() above
         self._num_frames.value -= 1
         self._lock.release()
 
