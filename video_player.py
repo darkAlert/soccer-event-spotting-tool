@@ -27,7 +27,11 @@ class SharedFrameBuffer:
         self._shm.close()
 
     def clear(self):
-        raise NotImplementedError
+        self._lock.acquire()
+        self._writing_idx = 0
+        self._reading_idx = 0
+        self._num_frames.value = 0
+        self._lock.release()
 
     def put(self, frame_id, frame, timeout=0.01):
         # Wait for the buffer to free up space:
@@ -115,7 +119,6 @@ class VideoPlayer:
         # Release current video if it is open:
         if self._openned:
             self._messages[:] = (self.Messages.TERMINATE, -1)
-            # self._buffer.stop()
             self._terminated.wait()
 
         # Temporarily open the video to get some info:
@@ -228,7 +231,7 @@ class VideoPlayer:
             # Put frame in the buffer:
             buffer.put(frame_id, frame)
 
-            if frame is None:
-                time.sleep(0.01)
+            # if frame is None:
+                # time.sleep(0.01)
 
         terminated.set()

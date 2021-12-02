@@ -169,11 +169,13 @@ def run_player(video_dir):
             elif state == State.PAUSE:
                 state = State.PLAY
                 window_main.window['button_play'].update('⏸')
+                fps_manager.reset()
 
         # Rewind (by slider):
         elif event == 'slider_frame_id':
             next_frame_id = int(values['slider_frame_id'])
             player.rewind(next_frame_id)
+            fps_manager.reset()
             if state == State.PAUSE:
                 state = State.PLAY_ONCE
 
