@@ -6,7 +6,7 @@ from enum import Enum
 import numpy as np
 import PySimpleGUI as sg
 
-from video_player import VideoPlayer, VideoPlayerMP, VideoPlayerMP_v2
+from video_player import VideoPlayer
 from fps_manager import FPSManager
 from event_manager import EventManager
 from windows.main import WindowMain, show_team_setting_window, SPEED_VALUES
@@ -62,7 +62,7 @@ def run_player(video_dir):
     window_main = WindowMain(video_dir)
 
     # Instantiate:
-    player = VideoPlayerMP_v2()
+    player = VideoPlayer()
     fps_manager = FPSManager()
     event_manager = None
     state = State.NOT_OPEN
