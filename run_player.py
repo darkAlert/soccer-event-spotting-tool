@@ -62,7 +62,7 @@ def run_player(video_dir):
     window_main = WindowMain(video_dir)
 
     # Instantiate:
-    player = VideoPlayer(300)
+    player = VideoPlayer(60)
     fps_manager = FPSManager()
     event_manager = None
     state = State.NOT_OPEN
