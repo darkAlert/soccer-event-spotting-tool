@@ -62,7 +62,7 @@ def run_player(video_dir):
     window_main = WindowMain(video_dir)
 
     # Instantiate:
-    player = VideoPlayer()
+    player = VideoPlayer(300)
     fps_manager = FPSManager()
     event_manager = None
     state = State.NOT_OPEN
@@ -95,6 +95,7 @@ def run_player(video_dir):
                         event_manager.save(get_events_path(player.path))
                 else:
                     continue
+            player.release()
             break
 
         # Open file_browse dialog:
@@ -123,7 +124,6 @@ def run_player(video_dir):
                     state = State.NOT_OPEN
 
                 # Open new video:
-
                 player.open(video_path)
                 if player.is_open():
                     # Set resolution:
@@ -224,22 +224,18 @@ def run_player(video_dir):
             selected_event = window_main.get_selected_event()
             window_main.refresh_event_table(event_manager, player.video_fps, select_event=selected_event)
 
-
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
             frame_size = calculate_frame_size(window_main.window.size)
-            # playing, img = player.capture(frame_size)
-            playing, img = player.get_frame(frame_size)
-
+            stopped, img = player.get_frame(frame_size)
             if img is not None:
                 pil_img = image_np_to_pil(img)
-            window_main.window['slider_frame_id'].update(value=player.frame_id)
             time = str(datetime.timedelta(seconds=int(player.frame_id / player.video_fps)))
             total_time = str(datetime.timedelta(seconds=int(player.num_frames / player.video_fps)))
             window_main.window['text_counter'].update(
                 value='{} / {}    {} / {}'.format(time, total_time, player.frame_id, player.num_frames-1)
             )
-            if state == State.PLAY_ONCE or playing == False:
+            if state == State.PLAY_ONCE or stopped:
                 state = State.PAUSE
                 window_main.window['button_play'].update('▶')
 
