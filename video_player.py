@@ -110,9 +110,7 @@ class VideoPlayer:
         self._buffer = None
         self._worker = None
         self._worker_terminated = None
-        self._terminate = None
         self._messages = None
-        self._resolution = None
         self._video_ended = None
 
     def __del__(self):
@@ -137,13 +135,11 @@ class VideoPlayer:
         self._path = video_path
         self._video_ended = Event()
         self._worker_terminated = Event()
-        self._terminate = Event()
-        self._messages = Queue(100)
-        self._resolution = Array('i', [self._width, self._height])
+        self._messages = Queue(500)
         self._buffer = SharedFrameBuffer(shape=(self._buffer_size, self._height, self._width, 3))
 
         # Run capture worker:
-        args = (self._path, self._buffer, self._resolution, self._messages, self._terminate, self._video_ended, self._worker_terminated)
+        args = (self._path, self._buffer, (self._width, self._height), self._messages, self._video_ended, self._worker_terminated)
         self._worker = Process(target=VideoPlayer.run_capture, args=args)
         self._worker.start()
         self._openned = True
@@ -151,21 +147,25 @@ class VideoPlayer:
     def release(self):
         # Release current video if it is open:
         if self._openned:
-            self._terminate.set()
+            self._messages.put((self.Messages.TERMINATE, None))
             self._buffer.clear()
             self._worker_terminated.wait()
             self._messages.close()
+            self._openned = False
 
     def set_resolution(self, width, height):
         assert self._openned
         if width != self._width or height != self._height:
             self._width = width
             self._height = height
-            self._resolution[:] = (width, height)
+            self._messages.put((self.Messages.SET_RESOLUTION, (width, height)))
 
     def rewind(self, next_frame_id):
         assert self._openned
-        self._messages.put_nowait((self.Messages.REWIND, next_frame_id))
+        try:
+            self._messages.put_nowait((self.Messages.REWIND, next_frame_id))
+        except:
+            pass
 
     def get_frame(self, size):
         assert self._openned
@@ -202,7 +202,7 @@ class VideoPlayer:
         return self._path
 
     @staticmethod
-    def run_capture(path, buffer, resolution, messages, terminate, video_ended, worker_terminated):
+    def run_capture(path, buffer, resolution, messages, video_ended, worker_terminated):
         '''
         Runs worker to capture frames from video
         '''
@@ -211,7 +211,7 @@ class VideoPlayer:
         video_ended.clear()
         frame_id = -1
 
-        while not terminate.is_set():
+        while True:
             # Read message:
             cmd, value = None, None
             while True:
@@ -221,12 +221,15 @@ class VideoPlayer:
                     break
 
             if cmd is not None:
-                # Rewind:
                 if cmd == VideoPlayer.Messages.REWIND:
                     buffer.clear()
                     video_ended.clear()
                     cap.set(cv2.CAP_PROP_POS_FRAMES, value)
                     frame_id = value - 1
+                elif cmd == VideoPlayer.Messages.SET_RESOLUTION:
+                    resolution = value
+                elif cmd == VideoPlayer.Messages.TERMINATE:
+                    break
 
             if video_ended.is_set():
                 time.sleep(0.01)
@@ -240,9 +243,8 @@ class VideoPlayer:
                 video_ended.set()
                 continue
             else:
-                res = resolution[:]
-                if frame.shape[:2] != res[:2]:
-                    frame = cv2.resize(frame, res, interpolation=cv2.INTER_AREA)
+                if frame.shape[:2] != resolution[:2]:
+                    frame = cv2.resize(frame, resolution, interpolation=cv2.INTER_AREA)
 
             # Put frame in the buffer:
             buffer.put(frame_id, frame)
