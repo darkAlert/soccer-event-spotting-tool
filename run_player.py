@@ -6,7 +6,7 @@ from enum import Enum
 import numpy as np
 import PySimpleGUI as sg
 
-from video_player import VideoPlayer
+from video_player import VideoPlayer, disable_opencv_multithreading
 from fps_manager import FPSManager
 from event_manager import EventManager
 from windows.main import WindowMain, show_team_setting_window, SPEED_VALUES
@@ -248,11 +248,15 @@ def run_player(video_dir):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--video_dir", help="path to dir containing videos")
+    parser.add_argument("--video-dir", help="path to dir containing videos")
+    parser.add_argument("-cvmp", '--enable_cvmp', action='store_true', default=False,
+                        help="enable multithreading for opencv")
 
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_args()
+    if not args.enable_cvmp:
+        disable_opencv_multithreading()
     run_player(args.video_dir)

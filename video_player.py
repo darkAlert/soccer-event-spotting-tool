@@ -5,7 +5,8 @@ import numpy as np
 import time
 
 
-cv2.setNumThreads(0)      # disable multithreading
+def disable_opencv_multithreading():
+    cv2.setNumThreads(0)
 
 
 class SharedFrameBuffer:
