@@ -1,6 +1,7 @@
 import os
 import argparse
 import datetime
+import multiprocessing
 from pathlib import Path
 from enum import Enum
 import numpy as np
@@ -256,7 +257,11 @@ def get_args():
 
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()      # need to build app with PyInstaller
+
     args = get_args()
+
     if not args.enable_cvmp:
         disable_opencv_multithreading()
+
     run_player(args.video_dir)
