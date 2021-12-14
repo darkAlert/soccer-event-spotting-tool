@@ -5,6 +5,7 @@ import numpy as np
 import time
 
 
+cv2.setNumThreads(0)
 def disable_opencv_multithreading():
     cv2.setNumThreads(0)
 
