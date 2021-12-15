@@ -9,6 +9,7 @@ import PySimpleGUI as sg
 
 from video_player import VideoPlayer, disable_opencv_multithreading
 from fps_manager import FPSManager
+from event_types import EventTypes
 from event_manager import EventManager
 from windows.main import WindowMain, show_team_setting_window, SPEED_VALUES
 from windows.utils import image_np_to_pil, show_conformation_window
@@ -38,18 +39,6 @@ def calculate_frame_size(window_size, max_frame_size=(1280,720), max_ratio=0.7):
     return target_frame_size
 
 
-def create_dummy_events(event_manager):
-    # Create fake events FOR DEBUG:
-    event_manager.create_event('ATTACK', 'Атака_1', 'Спартак', 1000)
-    event_manager.create_event('STANDARD_FREEKICK', 'Стандарт_штрафной_удар_1', 'Спартак', 5000)
-    event_manager.create_event('DEFENSE_LOW', 'Оборона_низкая_1', 'Динамо', 25000)
-    event_manager.create_event('STANDARD_FREEKICK', 'Стандарт_штрафной_удар_2', 'Спартак', 57800)
-    event_manager.create_event('PASS_TO_PENALTY_AREA', 'Передача_в_штрафную_соперника_1', 'Динамо', 100300)
-    event_manager.create_event('PASS_TO_PENALTY_AREA', 'Передача_в_штрафную_соперника_2', 'Динамо', 130111)
-
-    return event_manager
-
-
 def get_events_path(video_path):
     p = Path(video_path)
     game_dir = p.parent.absolute()
@@ -59,16 +48,17 @@ def get_events_path(video_path):
 
 
 def run_player(video_dir):
-    # Create GUI windows:
-    window_main = WindowMain(video_dir)
-
     # Instantiate:
     player = VideoPlayer(60)
     fps_manager = FPSManager()
+    event_types = EventTypes()
     event_manager = None
     state = State.NOT_OPEN
-    pil_img = image_np_to_pil(np.zeros((720,1280,3), dtype=np.uint8))
 
+    # Create GUI windows:
+    window_main = WindowMain(event_types, video_dir)
+    window_main.set_event_layout_visibility(False)
+    pil_img = image_np_to_pil(np.zeros((720, 1280, 3), dtype=np.uint8))
 
     # Playing loop:
     while state != State.EXIT:
@@ -145,9 +135,9 @@ def run_player(video_dir):
                         if home_team is None or away_team is None:
                             player.release()
                             continue
-                    event_manager = EventManager(home_team, away_team, path=events_path)
+                    event_manager = EventManager(event_types, home_team, away_team, path=events_path)
                     window_main.window.set_title(player.path)
-                    window_main.window['slider_frame_id'].update(disabled=False, range=(0, player.num_frames-1), value=0)
+                    window_main.window['-SLIDER-'].update(disabled=False, range=(0, player.num_frames-1), value=0)
                     window_main.window['combo_speed'].update(disabled=False)
                     fps_manager.reset()
                     fps_manager.set_target_fps(player.video_fps)
@@ -173,8 +163,8 @@ def run_player(video_dir):
                 fps_manager.reset()
 
         # Rewind (by slider):
-        elif event == 'slider_frame_id':
-            next_frame_id = int(values['slider_frame_id'])
+        elif event == '-SLIDER-':
+            next_frame_id = int(values['-SLIDER-'])
             player.rewind(next_frame_id)
             fps_manager.reset()
             if state == State.PAUSE:
@@ -193,42 +183,40 @@ def run_player(video_dir):
 
         # EVENT PANEL:
         elif event == '-EDIT_EVENT_SET_START_TIME-' and player.is_open():
-            window_main.set_event_time(player.video_fps, start_frame=player.frame_id)
+            if window_main.set_event_time(player.video_fps, start_frame=player.frame_id):
+                window_main.refresh_event_table(event_manager, player.video_fps)
         elif event == '-EDIT_EVENT_SET_END_TIME-' and player.is_open():
-            window_main.set_event_time(player.video_fps, end_frame=player.frame_id)
+            if window_main.set_event_time(player.video_fps, end_frame=player.frame_id):
+                window_main.refresh_event_table(event_manager, player.video_fps)
         elif event == '-EDIT_EVENT_MOVE_TO_START-' and player.is_open():
-            start_frame, _ = window_main.get_event_start_and_end()
+            start_frame, _ = window_main.get_selected_event_start_and_end()
             if start_frame is not None:
                 player.rewind(start_frame)
                 if state == State.PAUSE:
                     state = State.PLAY_ONCE
         elif event == '-EDIT_EVENT_MOVE_TO_END-' and player.is_open():
-            _, end_frame = window_main.get_event_start_and_end()
+            _, end_frame = window_main.get_selected_event_start_and_end()
             if end_frame is not None:
                 player.rewind(end_frame)
                 if state == State.PAUSE:
                     state = State.PLAY_ONCE
-        elif event == '-EDIT_EVENT_SAVE-' and player.is_open():
-            window_main.save_edited_event(event_manager)
-            selected_event = window_main.get_selected_event()
-            window_main.refresh_event_table(event_manager, player.video_fps, select_event=selected_event)
-        elif event == '-EDIT_EVENT_RESET-' and player.is_open():
-            selected_event = window_main.get_selected_event()
-            window_main.refresh_event_table(event_manager, player.video_fps, select_event=selected_event)
         elif event == '-EDIT_EVENT_DELETE-' and player.is_open():
             deleted_rows = window_main.delete_edited_event(event_manager)
             if deleted_rows is not None:
                 window_main.refresh_event_table(event_manager, player.video_fps, deleted_rows)
                 window_main.set_event_layout_visibility(False)
-        elif event == '-CREATE_EVENT-' and player.is_open():
-            window_main.create_new_event(event_manager, player.frame_id)
-            selected_event = window_main.get_selected_event()
-            window_main.refresh_event_table(event_manager, player.video_fps, select_event=selected_event)
+        elif '-EDIT_EVENT' in event and player.is_open():
+            if window_main.update_selected_event(event_manager, action=event):
+                window_main.refresh_event_table(event_manager, player.video_fps)
+        elif '-CREATE_EVENT' in event and player.is_open():
+            window_main.press_event_creation_button(event_manager, player.frame_id, button_key=event)
+            window_main.refresh_event_table(event_manager, player.video_fps)
 
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
             frame_size = calculate_frame_size(window_main.window.size)
             stopped, img = player.get_frame(frame_size)
+            window_main.window['-SLIDER-'].update(value=player.frame_id)
             if img is not None:
                 pil_img = image_np_to_pil(img)
             time = str(datetime.timedelta(seconds=int(player.frame_id / player.video_fps)))

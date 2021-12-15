@@ -73,7 +73,7 @@ class SharedFrameBuffer:
         # Prepare buffer element:
         offset = self._elem_size*self._reading_idx.value
         frame_info = np.ndarray((self._info.shape), dtype=self._info.dtype, buffer=self._shm.buf[offset:])
-        frame_id = frame_info[0]
+        frame_id = int(frame_info[0])
         shape = (frame_info[2], frame_info[1], 3)
         offset += self._info.nbytes
         frame_bytes = np.ndarray(shape, dtype=self._bytes.dtype, buffer=self._shm.buf[offset:])
