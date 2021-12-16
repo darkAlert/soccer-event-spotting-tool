@@ -391,15 +391,15 @@ class WindowMain:
             [sg.Input(key='-EDIT_EVENT_START_CAUSE-', enable_events=True, border_width=0)],
             [sg.Input(key='-EDIT_EVENT_END_CAUSE-', enable_events=True, border_width=0)],
             [
-                sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_START-', border_width=0, font=('',8)),
+                sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_START-', border_width=0, font=('',10)),
                 sg.Button('Установить текущее', key='-EDIT_EVENT_SET_START_TIME-',
-                          button_color='aquamarine', border_width=0, font=('',8))
+                          button_color='aquamarine', border_width=0, font=('',10))
             ],
             [
                 sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_END-',
-                          border_width=0, font=('',8)),
+                          border_width=0, font=('',10)),
                 sg.Button('Установить текущее', key='-EDIT_EVENT_SET_END_TIME-',
-                          button_color='aquamarine', border_width=0, font=('',8))
+                          button_color='aquamarine', border_width=0, font=('',10))
             ]
         ]
         sg_button_delete = [[sg.Button('Удалить', key='-EDIT_EVENT_DELETE-', size=(20, 1), border_width=0)]]
