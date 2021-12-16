@@ -392,13 +392,13 @@ class WindowMain:
             [sg.Input(key='-EDIT_EVENT_END_CAUSE-', enable_events=True, border_width=0, size=(25,1))],
             [
                 sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_START-', border_width=0, font=('',10)),
-                sg.Button('Установить текущее', key='-EDIT_EVENT_SET_START_TIME-',
+                sg.Button('Текущее', key='-EDIT_EVENT_SET_START_TIME-',
                           button_color='aquamarine', border_width=0, font=('',10))
             ],
             [
                 sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_END-',
                           border_width=0, font=('',10)),
-                sg.Button('Установить текущее', key='-EDIT_EVENT_SET_END_TIME-',
+                sg.Button('Текущее', key='-EDIT_EVENT_SET_END_TIME-',
                           button_color='aquamarine', border_width=0, font=('',10))
             ]
         ]
