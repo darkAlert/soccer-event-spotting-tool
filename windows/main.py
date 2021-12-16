@@ -190,10 +190,10 @@ class WindowMain:
         self.window['-EDIT_EVENT_END_CAUSE-'].update(self.selected_event.end_cause if self.selected_event.end_cause is not None else '')
 
         self.window['-EDIT_EVENT_MOVE_TO_START-'].update(
-            frame_id_to_time_stamp(self.selected_event.start_idx, video_fps) if self.selected_event.start_idx is not None else 'не задано'
+            frame_id_to_time_stamp(self.selected_event.start_idx, video_fps) if self.selected_event.start_idx is not None else 'нет'
         )
         self.window['-EDIT_EVENT_MOVE_TO_END-'].update(
-            frame_id_to_time_stamp(self.selected_event.end_idx, video_fps) if self.selected_event.end_idx is not None else 'не задано'
+            frame_id_to_time_stamp(self.selected_event.end_idx, video_fps) if self.selected_event.end_idx is not None else 'нет'
         )
 
 
@@ -383,20 +383,20 @@ class WindowMain:
         sg_right_column = [
             [sg.Text('-', key='-EDIT_EVENT_ID-')],
             [sg.Text('-', key='-EDIT_EVENT_TYPE-')],
-            [sg.Combo([''], key='-EDIT_EVENT_TEAM-', readonly=True, enable_events=True, size=(23,1))],
-            [sg.Input(key='-EDIT_EVENT_PLAYERS-', enable_events=True, border_width=0, size=(25,1))],
-            [sg.Input(key='-EDIT_EVENT_ENEMY_PLAYERS-', enable_events=True, border_width=0, size=(25,1))],
-            [sg.Input(key='-EDIT_EVENT_START_ZONE-', enable_events=True, border_width=0, size=(25,1))],
-            [sg.Input(key='-EDIT_EVENT_END_ZONE-', enable_events=True, border_width=0, size=(25,1))],
-            [sg.Input(key='-EDIT_EVENT_START_CAUSE-', enable_events=True, border_width=0, size=(25,1))],
-            [sg.Input(key='-EDIT_EVENT_END_CAUSE-', enable_events=True, border_width=0, size=(25,1))],
+            [sg.Combo([''], key='-EDIT_EVENT_TEAM-', readonly=True, enable_events=True, size=(25,1))],
+            [sg.Input(key='-EDIT_EVENT_PLAYERS-', enable_events=True, border_width=0, size=(27,1))],
+            [sg.Input(key='-EDIT_EVENT_ENEMY_PLAYERS-', enable_events=True, border_width=0, size=(27,1))],
+            [sg.Input(key='-EDIT_EVENT_START_ZONE-', enable_events=True, border_width=0, size=(27,1))],
+            [sg.Input(key='-EDIT_EVENT_END_ZONE-', enable_events=True, border_width=0, size=(27,1))],
+            [sg.Input(key='-EDIT_EVENT_START_CAUSE-', enable_events=True, border_width=0, size=(27,1))],
+            [sg.Input(key='-EDIT_EVENT_END_CAUSE-', enable_events=True, border_width=0, size=(27,1))],
             [
-                sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_START-', border_width=0, font=('',10)),
+                sg.Button('нет', key='-EDIT_EVENT_MOVE_TO_START-', border_width=0, font=('',10)),
                 sg.Button('Текущее', key='-EDIT_EVENT_SET_START_TIME-',
                           button_color='aquamarine', border_width=0, font=('',10))
             ],
             [
-                sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_END-',
+                sg.Button('нет', key='-EDIT_EVENT_MOVE_TO_END-',
                           border_width=0, font=('',10)),
                 sg.Button('Текущее', key='-EDIT_EVENT_SET_END_TIME-',
                           button_color='aquamarine', border_width=0, font=('',10))
