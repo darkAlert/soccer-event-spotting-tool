@@ -357,7 +357,7 @@ class WindowMain:
             # Create event group (by supertype):
             layout.append([
                 sg.Frame(stype.alias, buttons, element_justification='center',
-                         vertical_alignment='top', expand_x=False, title_location=TITLE_LOCATION_TOP,
+                         vertical_alignment='top', expand_x=True, title_location=TITLE_LOCATION_TOP,
                          border_width=0, font=('bold',10), title_color='white')
             ])
 
@@ -406,7 +406,7 @@ class WindowMain:
 
         # Create a layout:
         layout = [
-            [sg.Column(sg_left_column), sg.Column(sg_right_column)],
+            [sg.Column(sg_left_column), sg.Column(sg_right_column, justification='center', element_justification='center')],
             [sg.HorizontalSeparator()],
             [sg.Text('Ошибка!', text_color='red', font=('Helvetica', 8), key='not_filled', visible=False)],
             [sg.Column(sg_button_delete, justification='center', element_justification='center')]
