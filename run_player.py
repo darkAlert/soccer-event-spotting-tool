@@ -60,8 +60,7 @@ def run_player(video_dir):
     # Create GUI windows:
     window_main = WindowMain(event_types, video_dir)
     window_main.set_event_layout_visibility(False)
-    # pil_img = image_np_to_pil(np.zeros((720, 1280, 3), dtype=np.uint8))
-    pil_img = image_np_to_pil(np.zeros((1080, 1920, 3), dtype=np.uint8))
+    pil_img = image_np_to_pil(np.zeros((360, 640, 3), dtype=np.uint8))
 
     # Playing loop:
     while state != State.EXIT:
