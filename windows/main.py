@@ -357,7 +357,7 @@ class WindowMain:
             # Create event group (by supertype):
             layout.append([
                 sg.Frame(stype.alias, buttons, element_justification='center',
-                         vertical_alignment='top', expand_x=True, title_location=TITLE_LOCATION_TOP,
+                         vertical_alignment='top', expand_x=False, title_location=TITLE_LOCATION_TOP,
                          border_width=0, font=('bold',10), title_color='white')
             ])
 
