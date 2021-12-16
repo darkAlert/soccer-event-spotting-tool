@@ -56,7 +56,7 @@ class WindowMain:
             range=(0, 0),
             key='-SLIDER-',
             default_value=0,
-            size=(117, 15),
+            size=(40, 15),
             orientation='horizontal',
             font=('Helvetica', 12),
             enable_events=True,
@@ -86,7 +86,7 @@ class WindowMain:
         sg_event_table = sg.Table(
             values=[['','','','','','','']],
             headings=['ID', 'Тип', 'Команда', 'Начало', 'Конец'],
-            max_col_width=35,
+            max_col_width=25,
             auto_size_columns=True,
             vertical_scroll_only = True,
             justification='center',
@@ -106,7 +106,7 @@ class WindowMain:
             [sg_slider],
             navigation_panel,
             [sg_event_table]
-            ], vertical_alignment = 'top', expand_x=True, expand_y=True
+            ], vertical_alignment = 'top', expand_x=False, expand_y=True
         )
 
         # Right column (event_creation + event_editing panels):
