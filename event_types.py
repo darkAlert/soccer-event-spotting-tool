@@ -24,7 +24,7 @@ class EventTypes:
 
     @staticmethod
     def open(path):
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="utf8") as f:
             data = json.load(f)
 
         supertypes = {}
