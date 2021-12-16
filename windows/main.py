@@ -1,3 +1,4 @@
+import platform
 import PySimpleGUI as sg
 from PySimpleGUI import TITLE_LOCATION_TOP
 
@@ -28,6 +29,8 @@ class WindowMain:
         self.event_list = []
         self.selected_event = None
         self.window = self.create_window(event_types, video_dir)
+        print (platform.system())
+        self._osx = True if 'mac' in platform.system() else False
 
 
     def create_window(self, event_types : EventTypes, video_dir : str):
@@ -316,15 +319,20 @@ class WindowMain:
     def _recolor_button(self, sg_button, highlight):
         if highlight:
             color = ('black', 'lime')
-            sg_button.ButtonColor = sg.button_color_to_tuple(color[:2], sg_button.ButtonColor)
-            sg_button.TKButton.config(foreground=color[0], activeforeground=color[0])
-            sg_button.TKButton.config(background=color[1], activebackground=color[1])
+            if self._osx:
+                sg_button.update(button_color=color)
+            else:
+                sg_button.ButtonColor = sg.button_color_to_tuple(color[:2], sg_button.ButtonColor)
+                sg_button.TKButton.config(foreground=color[0], activeforeground=color[0])
+                sg_button.TKButton.config(background=color[1], activebackground=color[1])
         else:
             color = ('black', '#fdcb52')
-            sg_button.ButtonColor = sg.button_color_to_tuple(color, sg_button.ButtonColor)
-            sg_button.TKButton.config(foreground=color[0], activeforeground=color[1])
-            sg_button.TKButton.config(background=color[1], activebackground=color[0])
-
+            if self._osx:
+                sg_button.update(button_color=color)
+            else:
+                sg_button.ButtonColor = sg.button_color_to_tuple(color, sg_button.ButtonColor)
+                sg_button.TKButton.config(foreground=color[0], activeforeground=color[1])
+                sg_button.TKButton.config(background=color[1], activebackground=color[0])
 
 
     @staticmethod
@@ -341,7 +349,7 @@ class WindowMain:
                 key = '-CREATE_EVENT={}+{}'.format(stype_name, type_name)
                 if buttons_in_raw_counter == 0:
                     buttons.append([])
-                buttons[-1].append(sg.Button(type.alias, key=key, auto_size_button=True, border_width=0, font=('',9)))
+                buttons[-1].append(sg.Button(type.alias, key=key, auto_size_button=True, border_width=0, font=('',10)))
                 buttons_in_raw_counter += 1
                 if buttons_in_raw_counter >= buttons_per_raw:
                     buttons_in_raw_counter = 0
@@ -351,7 +359,7 @@ class WindowMain:
             layout.append([
                 sg.Frame(stype.alias, buttons, element_justification='center',
                          vertical_alignment='top', expand_x=True, title_location=TITLE_LOCATION_TOP,
-                         border_width=0, font=('bold',9), title_color='white')
+                         border_width=0, font=('bold',10), title_color='white')
             ])
 
         return layout, new_event_dict
@@ -401,7 +409,7 @@ class WindowMain:
         layout = [
             [sg.Column(sg_left_column), sg.Column(sg_right_column)],
             [sg.HorizontalSeparator()],
-            [sg.Text('Ошибка!', text_color='red', font=('Helvetica', 10), key='not_filled', visible=False)],
+            [sg.Text('Ошибка!', text_color='red', font=('Helvetica', 8), key='not_filled', visible=False)],
             [sg.Column(sg_button_delete, justification='center', element_justification='center')]
         ]
 
