@@ -113,10 +113,10 @@ class WindowMain:
         event_creation_layout, self._new_events = self.create_layout_event_creation(event_types)
         sg_right_column = sg.Column([
             [sg.Frame('', event_creation_layout,
-                      element_justification='center', vertical_alignment='top', expand_x=True)],
-            [sg.Frame('Редактирование ивента', self.create_layout_edit_event(), key='-EDIT_EVENT_LAYOUT-',
-                      element_justification='center', vertical_alignment='top', visible=True, expand_x=True)]
-            ], vertical_alignment='top', expand_x=True, expand_y=True
+                      element_justification='center', vertical_alignment='top', expand_x=True, border_width=1)],
+            [sg.Frame('', self.create_layout_edit_event(), key='-EDIT_EVENT_LAYOUT-',
+                      element_justification='center', vertical_alignment='top', visible=True, expand_x=True, border_width=1)]
+            ], vertical_alignment='top', expand_x=False, expand_y=True, vertical_scroll_only=True, scrollable=True
         )
 
         # All the stuff inside the window:
@@ -341,7 +341,7 @@ class WindowMain:
                 key = '-CREATE_EVENT={}+{}'.format(stype_name, type_name)
                 if buttons_in_raw_counter == 0:
                     buttons.append([])
-                buttons[-1].append(sg.Button(type.alias, key=key, auto_size_button=True, border_width=0))
+                buttons[-1].append(sg.Button(type.alias, key=key, auto_size_button=True, border_width=0, font=('',9)))
                 buttons_in_raw_counter += 1
                 if buttons_in_raw_counter >= buttons_per_raw:
                     buttons_in_raw_counter = 0
@@ -351,7 +351,7 @@ class WindowMain:
             layout.append([
                 sg.Frame(stype.alias, buttons, element_justification='center',
                          vertical_alignment='top', expand_x=True, title_location=TITLE_LOCATION_TOP,
-                         border_width=0, font='bold', title_color='white')
+                         border_width=0, font=('bold',9), title_color='white')
             ])
 
         return layout, new_event_dict
@@ -377,22 +377,25 @@ class WindowMain:
             [sg.Text('-', key='-EDIT_EVENT_ID-')],
             [sg.Text('-', key='-EDIT_EVENT_TYPE-')],
             [sg.Combo([''], key='-EDIT_EVENT_TEAM-', expand_x=True, readonly=True, enable_events=True)],
-            [sg.Input(key='-EDIT_EVENT_PLAYERS-', enable_events=True)],
-            [sg.Input(key='-EDIT_EVENT_ENEMY_PLAYERS-', enable_events=True)],
-            [sg.Input(key='-EDIT_EVENT_START_ZONE-', enable_events=True)],
-            [sg.Input(key='-EDIT_EVENT_END_ZONE-', enable_events=True)],
-            [sg.Input(key='-EDIT_EVENT_START_CAUSE-', enable_events=True)],
-            [sg.Input(key='-EDIT_EVENT_END_CAUSE-', enable_events=True)],
+            [sg.Input(key='-EDIT_EVENT_PLAYERS-', enable_events=True, border_width=0)],
+            [sg.Input(key='-EDIT_EVENT_ENEMY_PLAYERS-', enable_events=True, border_width=0)],
+            [sg.Input(key='-EDIT_EVENT_START_ZONE-', enable_events=True, border_width=0)],
+            [sg.Input(key='-EDIT_EVENT_END_ZONE-', enable_events=True, border_width=0)],
+            [sg.Input(key='-EDIT_EVENT_START_CAUSE-', enable_events=True, border_width=0)],
+            [sg.Input(key='-EDIT_EVENT_END_CAUSE-', enable_events=True, border_width=0)],
             [
-                sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_START-', border_width=0),
-                sg.Button('Установить текущее', key='-EDIT_EVENT_SET_START_TIME-', button_color='aquamarine', border_width=0)
+                sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_START-', border_width=0, font=('',8)),
+                sg.Button('Установить текущее', key='-EDIT_EVENT_SET_START_TIME-',
+                          button_color='aquamarine', border_width=0, font=('',8))
             ],
             [
-                sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_END-', border_width=0),
-                sg.Button('Установить текущее', key='-EDIT_EVENT_SET_END_TIME-', button_color='aquamarine', border_width=0)
+                sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_END-',
+                          border_width=0, font=('',8)),
+                sg.Button('Установить текущее', key='-EDIT_EVENT_SET_END_TIME-',
+                          button_color='aquamarine', border_width=0, font=('',8))
             ]
         ]
-        sg_button_delete = [[sg.Button('Удалить', key='-EDIT_EVENT_DELETE-', size=(20, 1))]]
+        sg_button_delete = [[sg.Button('Удалить', key='-EDIT_EVENT_DELETE-', size=(20, 1), border_width=0)]]
 
         # Create a layout:
         layout = [
