@@ -30,7 +30,7 @@ class WindowMain:
         self.selected_event = None
         self.window = self.create_window(event_types, video_dir)
         print (platform.system())
-        self._osx = True if 'mac' in platform.system() else False
+        self._osx = False if 'Linux' in platform.system() or 'Windows' in in platform.system() else True
 
 
     def create_window(self, event_types : EventTypes, video_dir : str):
