@@ -203,6 +203,9 @@ class VideoPlayer:
     def path(self):
         return self._path
 
+    def frame_size(self):
+        return (self._width, self._height)
+
     @staticmethod
     def run_capture(path, buffer, resolution, messages, video_ended, worker_terminated):
         '''

@@ -23,20 +23,22 @@ class State(Enum):
     EXIT = 5
 
 
-def calculate_frame_size(window_size, max_frame_size=(1280,720), max_ratio=0.7):
+def calculate_frame_size(window_size, target_frame_size=(1280,720), max_frame_size=(1280,720), max_ratio=0.7):
     '''
     :param window_size:
     :param max_video_size:
     :param max_ratio:       max ratio of video to window
     :return:
     '''
-    target_frame_size = max_frame_size
+    if target_frame_size[0] > max_frame_size[0] or target_frame_size[1] > max_frame_size[1]:
+        target_frame_size = max_frame_size
+    frame_size = target_frame_size
 
-    r = max_frame_size[0] / window_size[0]
+    r = target_frame_size[0] / window_size[0]
     if r > max_ratio:
-        target_frame_size = (int(round(window_size[0]*max_ratio)), int(round(window_size[1]*max_ratio)))
+        frame_size = (int(round(window_size[0]*max_ratio)), int(round(window_size[1]*max_ratio)))
 
-    return target_frame_size
+    return frame_size
 
 
 def get_events_path(video_path):
@@ -58,7 +60,8 @@ def run_player(video_dir):
     # Create GUI windows:
     window_main = WindowMain(event_types, video_dir)
     window_main.set_event_layout_visibility(False)
-    pil_img = image_np_to_pil(np.zeros((720, 1280, 3), dtype=np.uint8))
+    # pil_img = image_np_to_pil(np.zeros((720, 1280, 3), dtype=np.uint8))
+    pil_img = image_np_to_pil(np.zeros((1080, 1920, 3), dtype=np.uint8))
 
     # Playing loop:
     while state != State.EXIT:
@@ -118,7 +121,7 @@ def run_player(video_dir):
                 player.open(video_path)
                 if player.is_open():
                     # Set resolution:
-                    frame_size = calculate_frame_size(window_main.window.size)
+                    frame_size = calculate_frame_size(window_main.window.size, target_frame_size=player.frame_size())
                     player.set_resolution(frame_size[0], frame_size[1])
                     # Load events from file:
                     events_path = None
@@ -214,7 +217,7 @@ def run_player(video_dir):
 
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
-            frame_size = calculate_frame_size(window_main.window.size)
+            frame_size = calculate_frame_size(window_main.window.size, target_frame_size=player.frame_size())
             stopped, img = player.get_frame(frame_size)
             window_main.window['-SLIDER-'].update(value=player.frame_id)
             if img is not None:
