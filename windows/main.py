@@ -383,13 +383,13 @@ class WindowMain:
         sg_right_column = [
             [sg.Text('-', key='-EDIT_EVENT_ID-')],
             [sg.Text('-', key='-EDIT_EVENT_TYPE-')],
-            [sg.Combo([''], key='-EDIT_EVENT_TEAM-', expand_x=True, readonly=True, enable_events=True)],
-            [sg.Input(key='-EDIT_EVENT_PLAYERS-', enable_events=True, border_width=0)],
-            [sg.Input(key='-EDIT_EVENT_ENEMY_PLAYERS-', enable_events=True, border_width=0)],
-            [sg.Input(key='-EDIT_EVENT_START_ZONE-', enable_events=True, border_width=0)],
-            [sg.Input(key='-EDIT_EVENT_END_ZONE-', enable_events=True, border_width=0)],
-            [sg.Input(key='-EDIT_EVENT_START_CAUSE-', enable_events=True, border_width=0)],
-            [sg.Input(key='-EDIT_EVENT_END_CAUSE-', enable_events=True, border_width=0)],
+            # [sg.Combo([''], key='-EDIT_EVENT_TEAM-', expand_x=True, readonly=True, enable_events=True)],
+            # [sg.Input(key='-EDIT_EVENT_PLAYERS-', enable_events=True, border_width=0)],
+            # [sg.Input(key='-EDIT_EVENT_ENEMY_PLAYERS-', enable_events=True, border_width=0)],
+            # [sg.Input(key='-EDIT_EVENT_START_ZONE-', enable_events=True, border_width=0)],
+            # [sg.Input(key='-EDIT_EVENT_END_ZONE-', enable_events=True, border_width=0)],
+            # [sg.Input(key='-EDIT_EVENT_START_CAUSE-', enable_events=True, border_width=0)],
+            # [sg.Input(key='-EDIT_EVENT_END_CAUSE-', enable_events=True, border_width=0)],
             [
                 sg.Button('Не задано', key='-EDIT_EVENT_MOVE_TO_START-', border_width=0, font=('',10)),
                 sg.Button('Установить текущее', key='-EDIT_EVENT_SET_START_TIME-',
@@ -406,9 +406,8 @@ class WindowMain:
 
         # Create a layout:
         layout = [
-            [sg.Column(sg_left_column), sg.Column(sg_right_column, justification='center', element_justification='center')],
+            [sg.Column(sg_left_column), sg.Column(sg_right_column)],
             [sg.HorizontalSeparator()],
-            [sg.Text('Ошибка!', text_color='red', font=('Helvetica', 8), key='not_filled', visible=False)],
             [sg.Column(sg_button_delete, justification='center', element_justification='center')]
         ]
 
