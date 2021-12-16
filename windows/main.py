@@ -383,7 +383,7 @@ class WindowMain:
         sg_right_column = [
             [sg.Text('-', key='-EDIT_EVENT_ID-')],
             [sg.Text('-', key='-EDIT_EVENT_TYPE-')],
-            [sg.Combo([''], key='-EDIT_EVENT_TEAM-', readonly=True, enable_events=True, size=(25,1))],
+            [sg.Combo([''], key='-EDIT_EVENT_TEAM-', readonly=True, enable_events=True, size=(23,1))],
             [sg.Input(key='-EDIT_EVENT_PLAYERS-', enable_events=True, border_width=0, size=(25,1))],
             [sg.Input(key='-EDIT_EVENT_ENEMY_PLAYERS-', enable_events=True, border_width=0, size=(25,1))],
             [sg.Input(key='-EDIT_EVENT_START_ZONE-', enable_events=True, border_width=0, size=(25,1))],
