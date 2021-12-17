@@ -51,7 +51,7 @@ def get_events_path(video_path):
 
 def run_player(video_dir):
     # Instantiate:
-    player = VideoPlayer(60)
+    player = VideoPlayer(5)
     fps_manager = FPSManager()
     event_types = EventTypes()
     event_manager = None
@@ -62,18 +62,32 @@ def run_player(video_dir):
     window_main.set_event_layout_visibility(False)
     pil_img = image_np_to_pil(np.zeros((360, 640, 3), dtype=np.uint8))
 
+    rewinding = False
+    slider_frame_id = 0
+
     # Playing loop:
     while state != State.EXIT:
         real_fps, delay = 0, 0
         if state == State.PLAY:
             real_fps = fps_manager.mesure_fps()
-            delay = fps_manager.calulate_delay()
+            delay = 0#fps_manager.calulate_delay()
+
+        # Read next frame:
+        if state == State.PLAY or state == State.PLAY_ONCE:
+            pil_img, state, rewinding, slider_frame_id = \
+                read_next_frame(window_main, player, state, rewinding, slider_frame_id)
+
+        # Update image on the screen:
+        if pil_img is not None:
+            window_main.window['image_canvas'].update(data=pil_img)
 
         # Count FPS:
         window_main.window['text_fps'].update(value='FPS: {:.1f}'.format(real_fps))
 
-        # Window events:
-        event, values = window_main.window.read(timeout=delay)
+        # Read window events:
+        event, values = window_main.window.read(timeout=delay, timeout_key=None)
+        if event is None:
+            continue
 
         # Close and exit:
         if event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event == 'Выход':
@@ -146,6 +160,8 @@ def run_player(video_dir):
                     window_main.window['button_play'].update('⏸')
                     window_main.refresh_event_table(event_manager, player.video_fps)
                     state = State.PLAY_ONCE
+                    slider_frame_id = 0
+                    rewinding = False
 
 
         # Change playing speed:
@@ -166,12 +182,8 @@ def run_player(video_dir):
 
         # Rewind (by slider):
         elif event == '-SLIDER-':
-            next_frame_id = int(values['-SLIDER-'])
-            player.rewind(next_frame_id)
-            fps_manager.reset()
-            if state == State.PAUSE:
-                state = State.PLAY_ONCE
-
+            slider_frame_id = int(values['-SLIDER-'])
+            state, rewinding = rewind(player, fps_manager, slider_frame_id, state)
 
         # Save events:
         elif event == 'Сохранить':
@@ -192,16 +204,16 @@ def run_player(video_dir):
                 window_main.refresh_event_table(event_manager, player.video_fps)
         elif event == '-EDIT_EVENT_MOVE_TO_START-' and player.is_open():
             start_frame, _ = window_main.get_selected_event_start_and_end()
-            if start_frame is not None:
-                player.rewind(start_frame)
-                if state == State.PAUSE:
-                    state = State.PLAY_ONCE
+            if start_frame is not None and slider_frame_id != start_frame:
+                state, rewinding = rewind(player, fps_manager, start_frame, state)
+                window_main.window['-SLIDER-'].update(value=start_frame)
+                slider_frame_id = start_frame
         elif event == '-EDIT_EVENT_MOVE_TO_END-' and player.is_open():
             _, end_frame = window_main.get_selected_event_start_and_end()
-            if end_frame is not None:
-                player.rewind(end_frame)
-                if state == State.PAUSE:
-                    state = State.PLAY_ONCE
+            if end_frame is not None and slider_frame_id != end_frame:
+                state, rewinding = rewind(player, fps_manager, end_frame, state)
+                window_main.window['-SLIDER-'].update(value=end_frame)
+                slider_frame_id = end_frame
         elif event == '-EDIT_EVENT_DELETE-' and player.is_open():
             deleted_rows = window_main.delete_edited_event(event_manager)
             if deleted_rows is not None:
@@ -214,27 +226,46 @@ def run_player(video_dir):
             window_main.press_event_creation_button(event_manager, player.frame_id, button_key=event)
             window_main.refresh_event_table(event_manager, player.video_fps)
 
-        # Read next frame:
-        if state == State.PLAY or state == State.PLAY_ONCE:
-            frame_size = calculate_frame_size(window_main.window.size, target_frame_size=player.frame_size())
-            stopped, img = player.get_frame(frame_size)
-            window_main.window['-SLIDER-'].update(value=player.frame_id)
-            if img is not None:
-                pil_img = image_np_to_pil(img)
-            time = str(datetime.timedelta(seconds=int(player.frame_id / player.video_fps)))
-            total_time = str(datetime.timedelta(seconds=int(player.num_frames / player.video_fps)))
-            window_main.window['text_counter'].update(
-                value='{} / {}    {} / {}'.format(time, total_time, player.frame_id, player.num_frames-1)
-            )
-            if state == State.PLAY_ONCE or stopped:
-                state = State.PAUSE
-                window_main.window['button_play'].update('▶')
-
-        # Update image on the screen:
-        if pil_img is not None:
-            window_main.window['image_canvas'].update(data=pil_img)
-
     window_main.window.close()
+
+
+def read_next_frame(window_main, player, state, rewinding, slider_frame_id):
+    frame_size = calculate_frame_size(window_main.window.size, target_frame_size=player.frame_size())
+    stopped, img = player.get_frame(frame_size)
+    pil_img = None
+
+    if img is not None:
+        pil_img = image_np_to_pil(img)
+
+        # Synch slider and cur frame id:
+        if not rewinding and slider_frame_id != player.frame_id:
+            window_main.window['-SLIDER-'].update(value=player.frame_id)
+            slider_frame_id = player.frame_id
+
+        if rewinding and slider_frame_id == player.frame_id:
+            rewinding = False
+
+        # Update frame counter:
+        time = str(datetime.timedelta(seconds=int(player.frame_id / player.video_fps)))
+        total_time = str(datetime.timedelta(seconds=int(player.num_frames / player.video_fps)))
+        window_main.window['text_counter'].update(
+            value='{} / {}    {} / {}'.format(time, total_time, player.frame_id, player.num_frames - 1)
+        )
+        # Chege playing state:
+        if stopped or state == State.PLAY_ONCE and not rewinding:
+            state = State.PAUSE
+            window_main.window['button_play'].update('▶')
+
+    return pil_img, state, rewinding, slider_frame_id
+
+
+def rewind(player, fps_manager, next_frame_id, state):
+    player.rewind(next_frame_id)
+    fps_manager.reset()
+    if state == State.PAUSE:
+        state = State.PLAY_ONCE
+
+    return state, True
 
 
 def get_args():
