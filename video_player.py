@@ -105,6 +105,7 @@ class VideoPlayer:
         self._buffer_size = buffer_size
         self._path = ''
         self._openned = False
+        self._video_timestep = None
         self._video_fps = 0
         self._num_frames = 0
         self._width = 0
@@ -115,8 +116,9 @@ class VideoPlayer:
         self._worker_terminated = None
         self._messages = None
         self._video_ended = None
-        self._playing_start_time = None
-        self._playing_start_frame_id = None
+        # Anchor is required to control the playback FPS:
+        self._playback_anchor_time = None
+        self._playback_anchor_frame_id = None
 
     def __del__(self):
         self.release()
@@ -126,6 +128,7 @@ class VideoPlayer:
 
         # Release current video if it is open:
         self.release()
+        self.update_playback_anchor(0)
 
         # Temporarily open the video to get some info:
         cap = cv2.VideoCapture(video_path)
@@ -134,6 +137,7 @@ class VideoPlayer:
         self._num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self._width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self._height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self._video_timestep = 1000.0 / self._video_fps
         cap.release()
 
         # Init variables:
@@ -157,8 +161,6 @@ class VideoPlayer:
             self._worker_terminated.wait()
             self._messages.close()
             self._openned = False
-            self._playing_start_time = None
-            self._playing_start_frame_id = None
 
     def set_resolution(self, width, height):
         assert self._openned
@@ -171,33 +173,46 @@ class VideoPlayer:
         assert self._openned
         try:
             self._messages.put_nowait((self.Messages.REWIND, next_frame_id))
+            self.update_playback_anchor(next_frame_id)
         except:
             pass
+
+    def update_playback_anchor(self, target_frame_id=None):
+        if target_frame_id is None:
+            target_frame_id = self._frame_id + 1
+        self._playback_anchor_frame_id = target_frame_id
+        self._playback_anchor_time = None
 
     def get_frame(self, size):
         assert self._openned
 
-        if self._playing_start_time is None:
-            self._playing_start_time = datetime.now()
-            self._playing_start_frame_id = self._frame_id
-        playing_cur_time = datetime.now()
-        playing_elapsed = (playing_cur_time - self._playing_start_time).total_seconds() * 1000.0
-        offset = int(round(playing_elapsed / 40))
-        target_frame_id = self._playing_start_frame_id + offset
+        # Control playback FPS:
+        target_frame_id = None
+        if self._playback_anchor_time is not None:
+            elapsed = (datetime.now() - self._playback_anchor_time).total_seconds()
+            offset = int(round(elapsed * 1000.0 / self._video_timestep))     # in frames
+            target_frame_id = self._playback_anchor_frame_id + offset
+            # The target frame has already been read:
+            if target_frame_id == self._frame_id:
+                return False, None
 
-        if target_frame_id == self._frame_id:
-            return False, None
-
-        # Pop frame from buffer:
+        # Pop frames from buffer:
         while True:
             frame_id, frame = self._buffer.get()
-            if frame_id is None or frame_id >= target_frame_id:
+            # Read until the target frame is found:
+            if frame_id is None or target_frame_id is None or frame_id >= target_frame_id:
                 break
 
+        # Update frame_id if frame is read:
         if frame is not None:
             self._frame_id = frame_id
             if (size[0] != frame.shape[1] or size[1] != frame.shape[0]):
                 frame = cv2.resize(frame, size, interpolation=cv2.INTER_AREA)
+
+        # Update playback anchor:
+        if self._playback_anchor_time is None and \
+                self._frame_id is not None and self._frame_id == self._playback_anchor_frame_id:
+            self._playback_anchor_time = datetime.now()
 
         stopped = True if frame is None and self._video_ended.is_set() else False
 

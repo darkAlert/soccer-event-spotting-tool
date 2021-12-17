@@ -51,7 +51,7 @@ def get_events_path(video_path):
 
 def run_player(video_dir):
     # Instantiate:
-    player = VideoPlayer(10)
+    player = VideoPlayer(5)
     fps_manager = FPSManager()
     event_types = EventTypes()
     event_manager = None
@@ -83,7 +83,7 @@ def run_player(video_dir):
             window_main.window['image_canvas'].update(data=pil_img)
 
         # Count FPS:
-        window_main.window['text_fps'].update(value='FPS: {:.1f}'.format(real_fps))
+        # window_main.window['text_fps'].update(value='FPS: {:.1f}'.format(real_fps))
 
         # Read window events:
         event, values = window_main.window.read(timeout=delay, timeout_key=None)
@@ -180,6 +180,7 @@ def run_player(video_dir):
                 state = State.PLAY
                 window_main.window['button_play'].update('⏸')
                 fps_manager.reset()
+                player.update_playback_anchor()
 
         # Rewind (by slider):
         elif event == '-SLIDER-':
