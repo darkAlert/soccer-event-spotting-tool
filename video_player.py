@@ -3,6 +3,7 @@ from multiprocessing import Process, Event, shared_memory, Lock, Value, Array, Q
 from queue import Empty
 import numpy as np
 import time
+from datetime import datetime
 
 
 cv2.setNumThreads(0)
@@ -114,6 +115,8 @@ class VideoPlayer:
         self._worker_terminated = None
         self._messages = None
         self._video_ended = None
+        self._playing_start_time = None
+        self._playing_start_frame_id = None
 
     def __del__(self):
         self.release()
@@ -154,6 +157,8 @@ class VideoPlayer:
             self._worker_terminated.wait()
             self._messages.close()
             self._openned = False
+            self._playing_start_time = None
+            self._playing_start_frame_id = None
 
     def set_resolution(self, width, height):
         assert self._openned
@@ -172,8 +177,22 @@ class VideoPlayer:
     def get_frame(self, size):
         assert self._openned
 
+        if self._playing_start_time is None:
+            self._playing_start_time = datetime.now()
+            self._playing_start_frame_id = self._frame_id
+        playing_cur_time = datetime.now()
+        playing_elapsed = (playing_cur_time - self._playing_start_time).total_seconds() * 1000.0
+        offset = int(round(playing_elapsed / 40))
+        target_frame_id = self._playing_start_frame_id + offset
+
+        if target_frame_id == self._frame_id:
+            return False, None
+
         # Pop frame from buffer:
-        frame_id, frame = self._buffer.get()
+        while True:
+            frame_id, frame = self._buffer.get()
+            if frame_id is None or frame_id >= target_frame_id:
+                break
 
         if frame is not None:
             self._frame_id = frame_id

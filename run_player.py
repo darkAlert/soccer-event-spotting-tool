@@ -51,7 +51,7 @@ def get_events_path(video_path):
 
 def run_player(video_dir):
     # Instantiate:
-    player = VideoPlayer(5)
+    player = VideoPlayer(10)
     fps_manager = FPSManager()
     event_types = EventTypes()
     event_manager = None
@@ -70,7 +70,8 @@ def run_player(video_dir):
         real_fps, delay = 0, 0
         if state == State.PLAY:
             real_fps = fps_manager.mesure_fps()
-            delay = 0#fps_manager.calulate_delay()
+            delay = fps_manager.calulate_delay()
+            delay = 0
 
         # Read next frame:
         if state == State.PLAY or state == State.PLAY_ONCE:
