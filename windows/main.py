@@ -11,18 +11,6 @@ SPEED_VALUES = {'0.25': 0.25, '0.5': 0.5, 'Обычная': 1, '1.5': 1.5, '2.0'
 SPEED_DEFAULT = 'Обычная'
 
 
-class EventTableNames():
-    START_TIME = 0
-    END_TIME = 1
-    NAME = 2
-    TYPE = 3
-    TEAM = 4
-    FINISHED = 5
-    # Invisible:
-    START_IDX = 6
-    END_IDX = 7
-
-
 class WindowMain:
     def __init__(self, event_types : EventTypes, video_dir=''):
         self._new_events = {}
@@ -69,7 +57,9 @@ class WindowMain:
         # Create navigation panel:
         navigation_panel = [
             sg.Column([[
-                sg.Button('◼️', key='button_play', size=(2, 1)),
+                sg.Button('⏪', key='-NAVIGATION_BACKWARD_STEP-', size=(2, 1)),
+                sg.Button('◼️', key='-NAVIGATION_PLAY-', size=(2, 1)),
+                sg.Button('⏩', key='-NAVIGATION_FORWARD_STEP-', size=(2, 1)),
                 sg.Combo(
                     [str(speed) for speed in SPEED_VALUES.keys()],
                     key='combo_speed',
@@ -264,6 +254,12 @@ class WindowMain:
         if end_frame is not None:
             self.selected_event.end_idx = end_frame
             self.window['-EDIT_EVENT_MOVE_TO_END-'].update(frame_id_to_time_stamp(end_frame, video_fps))
+            # Finish new event if it is active:
+            key = '-CREATE_EVENT={}+{}'.format(self.selected_event.supertype, self.selected_event.type)
+            new_event = self._new_events[key]
+            if new_event is not None and new_event == self.selected_event.event_id:
+                self._new_events[key] = None
+                self._recolor_button(self.window[key], highlight=False)
 
         return True
 
@@ -313,6 +309,20 @@ class WindowMain:
     def set_event_layout_visibility(self, visible=True):
         self.window['-EDIT_EVENT_LAYOUT-'].update(visible=visible)
         self.selected_event = None
+
+
+    def set_play_button_state(self, state):
+        if state == 'play':
+            self.window['-NAVIGATION_PLAY-'].update('▶')
+        elif state == 'pause':
+            self.window['-NAVIGATION_PLAY-'].update('⏸')
+        else:
+            raise NotImplementedError
+
+
+    def set_slider(self, pos):
+        self.window['-SLIDER-'].update(value=pos)
+        return pos
 
 
     def _recolor_button(self, sg_button, highlight):
