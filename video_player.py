@@ -111,7 +111,7 @@ class VideoPlayer:
         self._width = 0
         self._height = 0
         self._frame_id = -1
-        self._rewind_step = 10.0                  # 10 seconds
+        self._rewind_step = 2.0                  # 10 seconds
         self._buffer = None
         self._worker = None
         self._worker_terminated = None

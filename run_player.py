@@ -197,6 +197,20 @@ def run_player(video_dir):
                     target_frame_id = 0
                 state, rewinding = rewind(player, fps_manager, target_frame_id, state)
                 slider_frame_id = window_main.set_slider(target_frame_id)
+        elif event == '-NAVIGATION_FORWARD_STEP_LONG-':
+            if state == State.PLAY or state == State.PAUSE or state == State.PLAY_ONCE:
+                target_frame_id = player.frame_id + player.rewind_step() * 5 * player.video_fps
+                if target_frame_id >= player.num_frames:
+                    target_frame_id = player.num_frames - 1
+                state, rewinding = rewind(player, fps_manager, target_frame_id, state)
+                slider_frame_id = window_main.set_slider(target_frame_id)
+        elif event == '-NAVIGATION_BACKWARD_STEP_LONG-':
+            if state == State.PLAY or state == State.PAUSE or state == State.PLAY_ONCE:
+                target_frame_id = player.frame_id - player.rewind_step() * 5 *  player.video_fps
+                if target_frame_id < 0:
+                    target_frame_id = 0
+                state, rewinding = rewind(player, fps_manager, target_frame_id, state)
+                slider_frame_id = window_main.set_slider(target_frame_id)
 
         # Navigation: Rewind (by slider):
         elif event == '-SLIDER-':

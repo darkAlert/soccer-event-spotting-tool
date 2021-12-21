@@ -57,9 +57,11 @@ class WindowMain:
         # Create navigation panel:
         navigation_panel = [
             sg.Column([[
+                sg.Button('⏪⏪', key='-NAVIGATION_BACKWARD_STEP_LONG-', size=(2, 1)),
                 sg.Button('⏪', key='-NAVIGATION_BACKWARD_STEP-', size=(2, 1)),
                 sg.Button('◼️', key='-NAVIGATION_PLAY-', size=(2, 1)),
                 sg.Button('⏩', key='-NAVIGATION_FORWARD_STEP-', size=(2, 1)),
+                sg.Button('⏩⏩', key='-NAVIGATION_FORWARD_STEP_LONG-', size=(2, 1)),
                 sg.Combo(
                     [str(speed) for speed in SPEED_VALUES.keys()],
                     key='combo_speed',
